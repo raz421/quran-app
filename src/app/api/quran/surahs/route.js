@@ -1,13 +1,14 @@
-import axios from "axios";
+import { quranApiClient } from "@/lib/quranApiClient";
 import { NextResponse } from "next/server";
-
-const API_BASE = "https://api.alquran.cloud/v1";
 
 export async function GET() {
   try {
-    const response = await axios.get(`${API_BASE}/surah`, { timeout: 10000 });
+    const response = await quranApiClient.get("/surah");
     return NextResponse.json({ surahs: response.data?.data ?? [] });
   } catch {
-    return NextResponse.json({ message: "Unable to fetch surahs." }, { status: 500 });
+    return NextResponse.json(
+      { message: "Unable to fetch surahs." },
+      { status: 500 },
+    );
   }
 }

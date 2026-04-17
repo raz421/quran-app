@@ -1,17 +1,16 @@
-import axios from "axios";
+import { quranApiClient } from "@/lib/quranApiClient";
 import { NextResponse } from "next/server";
-
-const API_BASE = "https://api.alquran.cloud/v1";
 
 export async function GET(_request, context) {
   const { id } = await context.params;
 
   try {
-    const [arabicResponse, translationResponse, audioResponse] = await Promise.all([
-      axios.get(`${API_BASE}/surah/${id}/quran-uthmani`, { timeout: 10000 }),
-      axios.get(`${API_BASE}/surah/${id}/en.asad`, { timeout: 10000 }),
-      axios.get(`${API_BASE}/surah/${id}/ar.alafasy`, { timeout: 10000 }),
-    ]);
+    const [arabicResponse, translationResponse, audioResponse] =
+      await Promise.all([
+        quranApiClient.get(`/surah/${id}/quran-uthmani`),
+        quranApiClient.get(`/surah/${id}/en.asad`),
+        quranApiClient.get(`/surah/${id}/ar.alafasy`),
+      ]);
 
     const arabic = arabicResponse.data?.data;
     const translation = translationResponse.data?.data;
@@ -20,7 +19,9 @@ export async function GET(_request, context) {
     const translationByAyah = Object.fromEntries(
       (translation?.ayahs ?? []).map((ayah) => [ayah.numberInSurah, ayah.text]),
     );
-    const audioByAyah = Object.fromEntries((audio?.ayahs ?? []).map((ayah) => [ayah.numberInSurah, ayah.audio]));
+    const audioByAyah = Object.fromEntries(
+      (audio?.ayahs ?? []).map((ayah) => [ayah.numberInSurah, ayah.audio]),
+    );
 
     const normalized = {
       id: arabic?.number,
@@ -38,6 +39,9 @@ export async function GET(_request, context) {
 
     return NextResponse.json(normalized);
   } catch {
-    return NextResponse.json({ message: "Unable to fetch surah details." }, { status: 500 });
+    return NextResponse.json(
+      { message: "Unable to fetch surah details." },
+      { status: 500 },
+    );
   }
 }
