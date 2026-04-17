@@ -4,6 +4,14 @@ import ReadingExperience from "@/components/ReadingExperience";
 import SettingsPanel from "@/components/SettingsPanel";
 import { getSurahReadingData } from "@/lib/quran";
 
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return Array.from({ length: 114 }, (_, index) => ({
+    id: String(index + 1),
+  }));
+}
+
 export async function generateMetadata({ params }) {
   const { id } = await params;
   return {

@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import SettingsPanel from "@/components/SettingsPanel";
 import SurahGrid from "@/components/SurahGrid";
 import { getSurahs } from "@/lib/quran";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Surahs | Quran",
@@ -17,9 +18,19 @@ export default async function SurahsPage() {
       <main className="pt-8">
         <div className="mx-auto max-w-6xl px-6">
           <h1 className="text-3xl font-semibold text-primary">All Surahs</h1>
-          <p className="mt-2 text-muted">Browse all chapters with a clean, focused reading flow.</p>
+          <p className="mt-2 text-muted">
+            Browse all chapters with a clean, focused reading flow.
+          </p>
         </div>
-        <SurahGrid surahs={surahs} title="Quran Chapters" />
+        <Suspense
+          fallback={
+            <div className="mx-auto mt-16 max-w-6xl px-4 text-sm text-muted sm:px-6">
+              Loading surahs...
+            </div>
+          }
+        >
+          <SurahGrid surahs={surahs} title="Quran Chapters" />
+        </Suspense>
       </main>
       <Footer />
       <SettingsPanel />
