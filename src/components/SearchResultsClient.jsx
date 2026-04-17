@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+const NAV_TARGET_KEY = "quran:navigationTarget";
+
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -82,6 +84,28 @@ export default function SearchResultsClient() {
 
   const hasQuery = useMemo(() => query.length >= 2, [query]);
 
+  const persistNavigationTarget = (surahNumber, ayahNumber) => {
+    try {
+      window.sessionStorage.setItem(
+        NAV_TARGET_KEY,
+        JSON.stringify({
+          surah: surahNumber,
+          ayah: ayahNumber,
+        }),
+      );
+    } catch {
+      // Ignore storage errors and keep normal hash navigation.
+    }
+  };
+
+  const clearNavigationTarget = () => {
+    try {
+      window.sessionStorage.removeItem(NAV_TARGET_KEY);
+    } catch {
+      // Ignore storage errors.
+    }
+  };
+
   return (
     <section className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
       <div className="mb-6">
@@ -111,23 +135,71 @@ export default function SearchResultsClient() {
 
       {!loading && results.length > 0 && (
         <div className="space-y-4">
-          {results.map((item) => (
+          {results.map((item, index) => (
             <article
-              key={`${item.surahNumber}-${item.ayahNumber}-${item.text.slice(0, 20)}`}
-              className="glass rounded-2xl p-5"
+              key={`${item.surahNumber}-${item.ayahNumber ?? "surah"}-${item.text.slice(0, 20)}`}
+              style={{ animationDelay: `${index * 45}ms` }}
+              className="glass rise-in group relative overflow-hidden rounded-3xl border border-white/10 p-5 transition duration-300 hover:-translate-y-0.5 hover:border-primary/55 hover:shadow-[0_20px_42px_-30px_rgba(2,6,23,1),0_0_26px_rgba(99,102,241,0.2)] sm:p-6"
             >
-              <p className="mb-2 text-xs uppercase tracking-[0.12em] text-muted">
-                {item.surahName} • Ayah {item.ayahNumber}
-              </p>
-              <p className="text-sm leading-7 text-foreground sm:text-base sm:leading-8">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(99,102,241,0.16),transparent_44%)] opacity-80" />
+              <div className="pointer-events-none absolute -bottom-16 -left-14 h-32 w-32 rounded-full border border-white/10 opacity-30" />
+              <div className="pointer-events-none absolute -top-10 right-6 arabic-amiri select-none text-[88px] leading-none text-white/[0.04] transition duration-300 group-hover:text-white/[0.07]">
+                ۞
+              </div>
+
+              <div className="relative z-10 mb-4 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-primary/25 bg-primary/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+                    {item.surahName}
+                  </span>
+                  {item.matchType !== "surah-name" && item.ayahNumber ? (
+                    <span className="rounded-full border border-white/10 bg-background/35 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.1em] text-muted">
+                      Ayah {item.ayahNumber}
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-white/10 bg-background/35 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.1em] text-muted">
+                      Surah Match
+                    </span>
+                  )}
+                </div>
+                <span className="text-[11px] uppercase tracking-[0.12em] text-muted">
+                  Match
+                </span>
+              </div>
+
+              <p className="relative z-10 text-sm leading-7 text-foreground sm:text-base sm:leading-8">
                 <HighlightedText text={item.text} query={query} />
               </p>
-              <Link
-                href={`/surah/${item.surahNumber}#ayah-${item.ayahNumber}`}
-                className="mt-4 inline-flex rounded-full border border-surface-border px-3 py-1 text-xs text-primary transition hover:border-primary"
-              >
-                Open in Surah
-              </Link>
+
+              <div className="relative z-10 mt-5 border-t border-white/10 pt-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs uppercase tracking-[0.12em] text-muted">
+                    Continue Reading
+                  </p>
+                  <Link
+                    href={
+                      item.matchType === "surah-name"
+                        ? `/surah/${item.surahNumber}`
+                        : `/surah/${item.surahNumber}#ayah-${item.ayahNumber}`
+                    }
+                    scroll={false}
+                    onClick={() => {
+                      if (item.matchType === "surah-name") {
+                        clearNavigationTarget();
+                        return;
+                      }
+                      persistNavigationTarget(
+                        item.surahNumber,
+                        item.ayahNumber,
+                      );
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/12 px-3.5 py-1.5 text-xs font-semibold text-primary transition duration-300 hover:-translate-y-0.5 hover:border-primary hover:bg-primary/18"
+                  >
+                    Open in Surah
+                    <span aria-hidden="true">{"->"}</span>
+                  </Link>
+                </div>
+              </div>
             </article>
           ))}
         </div>

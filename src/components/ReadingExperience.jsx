@@ -4,11 +4,13 @@ import { useAppSettings } from "@/context/AppSettingsContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const LAST_READ_KEY = "quran:lastRead";
+const NAV_TARGET_KEY = "quran:navigationTarget";
 
 export default function ReadingExperience({ surah }) {
   const { settings, setArabicSize, setTranslationSize } = useAppSettings();
   const [visibleAyahs, setVisibleAyahs] = useState(() => new Set());
   const [activeAyah, setActiveAyah] = useState(1);
+  const [pulseAyah, setPulseAyah] = useState(null);
   const activeAudioRef = useRef(null);
 
   const arabicClass = useMemo(
@@ -87,6 +89,87 @@ export default function ReadingExperience({ surah }) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const getHashAyah = () => {
+      const hash = window.location.hash;
+      if (!hash.startsWith("#ayah-")) {
+        return null;
+      }
+
+      const value = Number(hash.replace("#ayah-", ""));
+      return Number.isFinite(value) ? value : null;
+    };
+
+    const getSessionAyah = () => {
+      try {
+        const raw = window.sessionStorage.getItem(NAV_TARGET_KEY);
+        if (!raw) {
+          return null;
+        }
+
+        const target = JSON.parse(raw);
+        if (Number(target?.surah) !== Number(surah.id)) {
+          return null;
+        }
+
+        const ayah = Number(target?.ayah);
+        return Number.isFinite(ayah) ? ayah : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const scrollToHashAyah = () => {
+      const targetAyah = getHashAyah() ?? getSessionAyah();
+      if (!targetAyah) {
+        return;
+      }
+
+      let attempts = 0;
+      const maxAttempts = 12;
+
+      const tryScroll = () => {
+        const target = document.getElementById(`ayah-${targetAyah}`);
+        if (!target) {
+          attempts += 1;
+          if (attempts < maxAttempts) {
+            window.setTimeout(tryScroll, 80);
+          }
+          return;
+        }
+
+        const alignToTarget = (behavior = "auto") => {
+          const top = target.getBoundingClientRect().top + window.scrollY - 118;
+          window.scrollTo({ top: Math.max(0, top), behavior });
+        };
+
+        // Multiple passes make this resilient against route-scroll and layout timing races.
+        alignToTarget("auto");
+        window.setTimeout(() => alignToTarget("auto"), 80);
+        window.setTimeout(() => alignToTarget("smooth"), 260);
+
+        setActiveAyah(targetAyah);
+        setPulseAyah(targetAyah);
+        window.setTimeout(() => {
+          setPulseAyah((current) => (current === targetAyah ? null : current));
+        }, 1800);
+
+        if (getSessionAyah() === targetAyah) {
+          window.sessionStorage.removeItem(NAV_TARGET_KEY);
+        }
+      };
+
+      tryScroll();
+    };
+
+    scrollToHashAyah();
+    window.addEventListener("hashchange", scrollToHashAyah);
+
+    return () => {
+      window.removeEventListener("hashchange", scrollToHashAyah);
+    };
+  }, [surah.id, surah.ayahs]);
 
   useEffect(() => {
     const cards = document.querySelectorAll("[data-ayah-card]");
@@ -252,11 +335,18 @@ export default function ReadingExperience({ surah }) {
             id={`ayah-${ayah.numberInSurah}`}
             data-ayah-card
             data-ayah={ayah.numberInSurah}
-            style={{ animationDelay: `${index * 40}ms` }}
+            style={{
+              animationDelay: `${index * 40}ms`,
+              scrollMarginTop: "124px",
+            }}
             className={`glass group relative overflow-hidden rounded-3xl border border-white/10 p-5 transition duration-350 sm:p-6 ${
               visibleAyahs.has(ayah.numberInSurah)
                 ? "translate-y-0 opacity-100"
                 : "translate-y-2 opacity-0"
+            } ${
+              pulseAyah === ayah.numberInSurah
+                ? "ayah-pulse border-primary/70"
+                : ""
             } hover:-translate-y-1 hover:border-primary/60 hover:shadow-[0_0_24px_rgba(99,102,241,0.16)]`}
             onMouseEnter={() => saveLastRead(ayah.numberInSurah)}
           >
