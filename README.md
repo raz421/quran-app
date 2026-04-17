@@ -25,6 +25,7 @@ Built with Next.js App Router, Tailwind CSS v4, and server-side API routes that 
 - Hero-first search interaction
 - Search results with matched ayah highlighting
 - Surah detail composition from multiple Quran API editions
+- Single-track ayah audio playback (starting a new ayah stops the previous one)
 - Persistent local settings (theme, font, sizes)
 - Dark-first premium visual system
 - Responsive layouts across mobile, tablet, and desktop

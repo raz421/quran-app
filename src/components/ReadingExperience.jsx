@@ -24,21 +24,39 @@ export default function ReadingExperience({ surah }) {
       return;
     }
 
-    if (activeAudioRef.current) {
-      activeAudioRef.current.pause();
-      activeAudioRef.current.currentTime = 0;
+    const previousAudio = activeAudioRef.current;
+    const previousTime = previousAudio?.currentTime ?? 0;
+    const previousWasPlaying = Boolean(previousAudio && !previousAudio.paused);
+
+    if (previousAudio) {
+      previousAudio.pause();
     }
 
-    const audio = new Audio(url);
-    activeAudioRef.current = audio;
+    const nextAudio = new Audio(url);
+    activeAudioRef.current = nextAudio;
 
-    audio.addEventListener("ended", () => {
-      if (activeAudioRef.current === audio) {
+    nextAudio.addEventListener("ended", () => {
+      if (activeAudioRef.current === nextAudio) {
         activeAudioRef.current = null;
       }
     });
 
-    audio.play().catch(() => null);
+    nextAudio
+      .play()
+      .then(() => {
+        if (previousAudio) {
+          previousAudio.currentTime = 0;
+        }
+      })
+      .catch(() => {
+        if (activeAudioRef.current === nextAudio) {
+          activeAudioRef.current = previousAudio ?? null;
+        }
+        if (previousAudio && previousWasPlaying) {
+          previousAudio.currentTime = previousTime;
+          previousAudio.play().catch(() => null);
+        }
+      });
   };
 
   const saveLastRead = (ayahNumber) => {
