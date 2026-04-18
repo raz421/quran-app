@@ -5,7 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
 export default function SurahGrid({ surahs, title = "Surahs" }) {
-  const itemsPerPage = 12;
+  // Show 9 cards per page, 3 per row
+  const itemsPerPage = 9;
   const totalPages = Math.max(1, Math.ceil(surahs.length / itemsPerPage));
   const router = useRouter();
   const pathname = usePathname();
@@ -98,7 +99,7 @@ export default function SurahGrid({ surahs, title = "Surahs" }) {
           <p className="text-sm text-muted">{surahs.length} chapters total</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {paginatedSurahs.map((surah, index) => (
             <Link
               key={surah.number}
@@ -115,9 +116,12 @@ export default function SurahGrid({ surahs, title = "Surahs" }) {
                 transform:
                   "perspective(1200px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateY(var(--lift))",
               }}
-              className="group rise-in relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-elevated via-surface to-surface p-5 shadow-[0_20px_42px_-30px_rgba(2,6,23,1)] transition-[transform,border-color,box-shadow] duration-300 hover:border-primary/55 hover:shadow-[0_0_26px_rgba(99,102,241,0.18)]"
+              className="group rise-in relative flex h-full flex-col overflow-hidden rounded-3xl border border-blue-500 bg-linear-to-b from-elevated via-surface to-surface p-5 shadow-[0_20px_42px_-30px_rgba(2,6,23,1)] transition-[transform,border-color,box-shadow] duration-300 hover:border-blue-700 hover:shadow-[0_0_26px_rgba(99,102,241,0.18)]"
             >
               <div className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_0%_100%,rgba(99,102,241,0.12),transparent_45%)] opacity-80" />
+              {/* Animated geometric Islamic pattern overlay */}
+              <div className="pointer-events-none absolute inset-0 rounded-3xl islamic-pattern-overlay" />
+
               <div
                 className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition duration-300 group-hover:opacity-100"
                 style={{
@@ -127,8 +131,8 @@ export default function SurahGrid({ surahs, title = "Surahs" }) {
               />
               <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-primary/20 blur-2xl transition duration-300 group-hover:bg-primary/30" />
               <div className="pointer-events-none absolute -left-10 bottom-0 h-24 w-24 rounded-full bg-accent/10 blur-2xl opacity-0 transition duration-300 group-hover:opacity-100" />
-              <div className="pointer-events-none absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-transparent via-primary/55 to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
-              <div className="pointer-events-none absolute -bottom-8 -right-1 arabic-amiri select-none text-[128px] leading-none text-white/[0.045] transition duration-300 group-hover:text-white/[0.07]">
+              <div className="pointer-events-none absolute bottom-0 left-0 h-1 w-full bg-linear-to-r from-transparent via-primary/55 to-transparent opacity-0 transition duration-300 group-hover:opacity-100" />
+              <div className="pointer-events-none absolute -bottom-8 -right-1 arabic-amiri select-none text-[128px] leading-none text-white/4.5 transition duration-300 group-hover:text-white/7">
                 ۞
               </div>
 
@@ -155,7 +159,7 @@ export default function SurahGrid({ surahs, title = "Surahs" }) {
               <div className="relative z-10 mt-5 border-t border-white/10 pt-4">
                 <div className="flex items-center justify-between">
                   <span
-                    className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] ${revelationTone(
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-widest ${revelationTone(
                       surah.revelationType,
                     )}`}
                   >
